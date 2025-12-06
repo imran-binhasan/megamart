@@ -13,6 +13,7 @@ import { Cart } from '../../cart/entity/cart.entity';
 import { Wishlist } from '../../wishlist/entity/wishlist.entity';
 import { ProductReview } from '../../product_review/entity/product_review.entity';
 import { AttributeValue } from '../../attribute_value/entity/attribute_value.entity';
+import { User } from 'src/modules/personnel-management/user/entity/user.entity';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AttributeValue } from '../../attribute_value/entity/attribute_value.ent
       Cart,
       Wishlist,
       ProductReview,
+      User,
     ]),
     AuthModule,
     UploadModule,

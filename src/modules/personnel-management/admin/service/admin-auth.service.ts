@@ -26,6 +26,7 @@ export class AdminAuthService extends AuthBaseService {
     @InjectRepository(Role)
     private roleRepository: Repository<Role>,
     private dataSource: DataSource,
+    @InjectRepository(User)
     userRepository: Repository<User>,
     tokenService: TokenService,
     redisService: RedisService,

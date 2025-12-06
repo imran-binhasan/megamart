@@ -3,7 +3,6 @@ import { Column, Entity, OneToOne, JoinColumn, Index } from 'typeorm';
 import { Vendor } from './vendor.entity';
 
 @Entity('vendor_bank_info')
-@Index(['vendor_id'], { unique: true })
 export class VendorBankInfo extends BaseEntity {
   @OneToOne(() => Vendor, (vendor) => vendor.bankInfo, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'vendor_id' })

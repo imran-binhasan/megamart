@@ -6,10 +6,11 @@ import { NotificationController } from '../controller/notification.controller';
 import { NotificationService } from '../service/notification.service';
 import { AuthModule } from 'src/core/auth/module/auth.module';
 import { Customer } from 'src/modules/personnel-management/customer/entity/customer.entity';
+import { User } from 'src/modules/personnel-management/user/entity/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Notification, CustomerNotification, Customer]),
+    TypeOrmModule.forFeature([Notification, CustomerNotification, Customer, User]),
     AuthModule,
   ],
   controllers: [NotificationController],

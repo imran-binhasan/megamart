@@ -12,10 +12,11 @@ import { ProductModule } from 'src/modules/product-management/product/module/pro
 import { CartModule } from 'src/modules/product-management/cart/module/cart.module';
 import { CouponModule } from 'src/modules/product-management/coupon/module/coupon.module';
 import { AddressModule } from 'src/modules/personnel-management/address/module/address.module';
+import { User } from 'src/modules/personnel-management/user/entity/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, OrderItem]),
+    TypeOrmModule.forFeature([Order, OrderItem, User]),
     forwardRef(() => CustomerModule),
     forwardRef(() => ProductModule),
     forwardRef(() => CartModule),

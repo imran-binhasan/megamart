@@ -14,6 +14,7 @@ import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { HttpExceptionFilter } from 'src/shared/filter/http-exception.filter';
 import { ResponseInterceptor } from 'src/shared/interceptor/response.interceptor';
 import { JwtAuthGuard } from './auth/guard/jwt-auth-guard';
+import { User } from 'src/modules/personnel-management/user/entity/user.entity';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { JwtAuthGuard } from './auth/guard/jwt-auth-guard';
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      inject: [ConfigModule],
+      inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const dbConfig = configService.get<DatabaseConfig>('database');
         if (!dbConfig) {
@@ -33,6 +34,7 @@ import { JwtAuthGuard } from './auth/guard/jwt-auth-guard';
         return dbConfig;
       },
     }),
+    TypeOrmModule.forFeature([User]),
     RedisModule,
     CacheModule,
     RabbitMQModule.forRootAsync(),

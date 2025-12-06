@@ -23,6 +23,7 @@ export class VendorAuthService extends AuthBaseService {
     @InjectRepository(Vendor)
     private vendorRepository: Repository<Vendor>,
     private dataSource: DataSource,
+    @InjectRepository(User)
     userRepository: Repository<User>,
     tokenService: TokenService,
     redisService: RedisService,

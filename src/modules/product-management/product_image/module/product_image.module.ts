@@ -5,9 +5,10 @@ import { AuthModule } from 'src/core/auth/module/auth.module';
 import { ProductImageController } from '../controller/product_image.controller';
 import { ProductImageService } from '../service/product_image.service';
 import { Product } from '../../product/entity/product.entity';
+import { User } from 'src/modules/personnel-management/user/entity/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ProductImage, Product]), AuthModule],
+  imports: [TypeOrmModule.forFeature([ProductImage, Product, User]), AuthModule],
   controllers: [ProductImageController],
   providers: [ProductImageService],
   exports: [ProductImageService],

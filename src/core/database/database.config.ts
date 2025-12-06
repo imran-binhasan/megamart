@@ -39,11 +39,12 @@ export default registerAs('database', () => {
     host: process.env.DB_HOST,
     port: Number(process.env.DB_PORT),
     username: process.env.DB_USER,
-    password: process.env.DB_PASS,
+    password: process.env.DB_PASSWORD,
     database: dbName,
     synchronize: false,
     logging: env !== 'production',
     autoLoadEntities: true,
     migrations: ['dist/core/database/migrations/*{.ts,.js}'],
+    ssl: process.env.DB_TYPE === 'postgres' ? { rejectUnauthorized: false } : false,
   };
 });

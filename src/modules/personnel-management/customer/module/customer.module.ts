@@ -8,7 +8,6 @@ import { Cart } from 'src/modules/product-management/cart/entity/cart.entity';
 import { Wishlist } from 'src/modules/product-management/wishlist/entity/wishlist.entity';
 import { Notification } from 'src/modules/notification-management/notification/entity/notification.entity';
 import { AuthModule } from 'src/core/auth/module/auth.module';
-import { CacheModule } from '@nestjs/cache-manager';
 import { UploadModule } from 'src/core/upload/module/upload.module';
 import { CustomerAuthController } from '../controller/customer-auth.controller';
 import { CustomerProfileController } from '../controller/customer-profile.controller';
@@ -18,7 +17,7 @@ import { CustomerProfileService } from '../service/customer-profile.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Customer]),
-    CacheModule,
+    AuthModule,
     UploadModule,
   ],
   controllers: [

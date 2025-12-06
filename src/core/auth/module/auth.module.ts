@@ -16,6 +16,9 @@ import { User } from 'src/modules/personnel-management/user/entity/user.entity';
 import { Admin } from 'src/modules/personnel-management/admin/entity/admin.entity';
 import { Customer } from 'src/modules/personnel-management/customer/entity/customer.entity';
 import { Vendor } from 'src/modules/personnel-management/vendor/entity/vendor.entity';
+import { VendorKYC } from 'src/modules/personnel-management/vendor/entity/vendor-kyc.entity';
+import { VendorBankInfo } from 'src/modules/personnel-management/vendor/entity/vendor-bank-info.entity';
+import { VendorAddress } from 'src/modules/personnel-management/vendor/entity/vendor-address.entity';
 import { Role } from 'src/modules/personnel-management/role/entity/role.entity';
 import { Permission } from 'src/modules/personnel-management/permission/entity/permission.entity';
 import { CustomerAuthService } from 'src/modules/personnel-management/customer/service/customer-auth.service';
@@ -28,7 +31,7 @@ import { RoleService } from 'src/modules/personnel-management/role/service/role.
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([User, Admin, Customer, Vendor, Role, Permission]),
+    TypeOrmModule.forFeature([User, Admin, Customer, Vendor, VendorKYC, VendorBankInfo, VendorAddress, Role, Permission]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

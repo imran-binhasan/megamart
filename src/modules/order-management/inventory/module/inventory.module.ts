@@ -6,10 +6,11 @@ import { AuthModule } from 'src/core/auth/module/auth.module';
 import { InventoryController } from '../controller/inventory.controller';
 import { InventoryService } from '../service/inventory.service';
 import { Product } from 'src/modules/product-management/product/entity/product.entity';
+import { User } from 'src/modules/personnel-management/user/entity/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Inventory, InventoryTransaction, Product]),
+    TypeOrmModule.forFeature([Inventory, InventoryTransaction, Product, User]),
     AuthModule,
   ],
   controllers: [InventoryController],

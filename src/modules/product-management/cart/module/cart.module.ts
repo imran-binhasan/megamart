@@ -6,9 +6,10 @@ import { CartController } from '../controller/cart.controller';
 import { AuthModule } from 'src/core/auth/module/auth.module';
 import { Customer } from 'src/modules/personnel-management/customer/entity/customer.entity';
 import { Product } from '../../product/entity/product.entity';
+import { User } from 'src/modules/personnel-management/user/entity/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Cart, Customer, Product]), AuthModule],
+  imports: [TypeOrmModule.forFeature([Cart, Customer, Product, User]), AuthModule],
   controllers: [CartController],
   providers: [CartService],
   exports: [CartService],

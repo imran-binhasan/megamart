@@ -6,9 +6,12 @@ import { VendorService } from '../service/vendor.service';
 import { AuthModule } from 'src/core/auth/module/auth.module';
 import { User } from '../../user/entity/user.entity';
 import { CloudinaryService } from 'src/core/upload/service/cloudinary.service';
+import { VendorBankInfo } from '../entity/vendor-bank-info.entity';
+import { VendorKYC } from '../entity/vendor-kyc.entity';
+import { VendorAddress } from '../entity/vendor-address.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Vendor, User]), AuthModule],
+  imports: [TypeOrmModule.forFeature([Vendor, VendorBankInfo, VendorKYC,VendorAddress, User]), AuthModule],
   controllers: [VendorController],
   providers: [VendorService, CloudinaryService],
   exports: [VendorService],

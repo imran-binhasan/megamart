@@ -36,12 +36,22 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   ) {}
 
   async onModuleInit() {
+    // Don't setup queues during initialization - they'll be created on-demand
+    this.logger.log('✅ RabbitMQ service initialized successfully (queues will be created on-demand)');
+  }
+
+  // Optional: Setup queues manually when connection is ready
+  async setupQueuesWhenReady(): Promise<void> {
+    if (!this.isConnectionReady()) {
+      this.logger.debug('RabbitMQ connection not ready for queue setup');
+      return;
+    }
+
     try {
-      // Setup default queues
       await this.setupDefaultQueues();
-      this.logger.log('✅ RabbitMQ service initialized successfully');
+      this.logger.log('✅ Successfully setup all RabbitMQ queues');
     } catch (error) {
-      this.logger.error('❌ Failed to initialize RabbitMQ service:', error);
+      this.logger.debug(`Queue setup failed (will be created on-demand): ${error.message}`);
     }
   }
 
@@ -161,7 +171,18 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
 
     for (const queue of queues) {
       try {
-        await this.amqpConnection.channel.assertQueue(queue.name, {
+        // Check if channel is available before using it
+        const channel = this.amqpConnection.channel;
+        if (!channel) {
+          throw new Error('Channel is not available');
+        }
+
+        // Ensure exchange exists before creating queue
+        await channel.assertExchange(queue.exchange, 'topic', {
+          durable: true,
+        });
+
+        await channel.assertQueue(queue.name, {
           durable: true,
           arguments: {
             'x-dead-letter-exchange': 'ecommerce.deadletter',
@@ -170,13 +191,16 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
           },
         });
 
-        await this.amqpConnection.channel.bindQueue(
+        await channel.bindQueue(
           queue.name,
           queue.exchange,
           queue.routingKey,
         );
+
+        this.logger.debug(`✅ Successfully setup queue: ${queue.name}`);
       } catch (error) {
-        this.logger.error(`Failed to setup queue ${queue.name}:`, error);
+        // Silently skip queue setup errors - queues will be created on-demand
+        this.logger.debug(`Queue ${queue.name} will be created on-demand: ${error.message}`);
       }
     }
   }
@@ -200,6 +224,12 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
         },
       };
 
+      // Ensure connection is available before publishing
+      if (!this.isConnectionReady()) {
+        this.logger.warn('RabbitMQ connection not ready, skipping message publish');
+        return false;
+      }
+
       await this.amqpConnection.publish(
         exchange,
         routingKey,
@@ -212,8 +242,16 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       this.logger.error(
         `❌ Failed to publish message to ${exchange}/${routingKey}:`,
-        error,
+        error.message,
       );
+      return false;
+    }
+  }
+
+  private isConnectionReady(): boolean {
+    try {
+      return !!(this.amqpConnection.managedConnection && this.amqpConnection.managedChannel);
+    } catch {
       return false;
     }
   }

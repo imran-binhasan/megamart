@@ -22,6 +22,7 @@ export class CustomerAuthService extends AuthBaseService {
     @InjectRepository(Customer)
     private customerRepository: Repository<Customer>,
     private dataSource: DataSource,
+    @InjectRepository(User)
     userRepository: Repository<User>,
     tokenService: TokenService,
     redisService: RedisService,

@@ -18,8 +18,12 @@ export enum VendorAddressType {
 }
 
 @Entity('vendor_address')
-@Index(['vendor_id'])
+@Index(['vendorId'])
 export class VendorAddress extends BaseEntity {
+  @Column({ name: 'vendor_id', type: 'int' })
+  @Index()
+  vendorId: number;
+
   @ManyToOne(() => Vendor, (vendor) => vendor.addresses, {
     onDelete: 'CASCADE',
   })

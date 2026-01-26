@@ -362,10 +362,16 @@ export class ProductService {
     const existingProduct = await this.productRepository.findOne({
       where: { id },
       relations: ['category', 'brand', 'attributeValues'],
+      withDeleted: true,
     });
 
     if (!existingProduct) {
       throw new NotFoundException(`Product with ID ${id} not found`);
+    }
+
+    // Handle restore if isDeleted is false (restore)
+    if (updateProductDto.isDeleted === false && existingProduct.deletedAt) {
+      await this.productRepository.restore(id);
     }
 
     // Check name uniqueness if name is being updated

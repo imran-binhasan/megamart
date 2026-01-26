@@ -9,11 +9,6 @@ export interface RabbitMQModuleOptions {
     name: string;
     type: 'direct' | 'topic' | 'headers' | 'fanout';
   }>;
-  queues?: Array<{
-    name: string;
-    exchange: string;
-    routingKey?: string;
-  }>;
 }
 
 @Global()
@@ -28,70 +23,81 @@ export class RabbitMQModule {
         NestRabbitMQModule.forRootAsync({
           imports: [ConfigModule],
           inject: [ConfigService],
-          useFactory: async (configService: ConfigService) => ({
-            exchanges: [
-              // Default ecommerce exchanges
-              {
-                name: 'ecommerce.events',
-                type: 'topic',
-                options: { durable: true },
+          useFactory: async (configService: ConfigService) => {
+            const user = configService.get<string>('RABBITMQ_USER');
+            const password = configService.get<string>('RABBITMQ_PASSWORD');
+            const host = configService.get<string>('RABBITMQ_HOST');
+            const port = configService.get<number>('RABBITMQ_PORT', 5672);
+
+            const uri = `amqp://${user}:${password}@${host}:${port}`;
+
+            return {
+              uri,
+
+              exchanges: [
+                {
+                  name: 'ecommerce.events',
+                  type: 'topic',
+                  options: { durable: true },
+                },
+                {
+                  name: 'ecommerce.notifications',
+                  type: 'direct',
+                  options: { durable: true },
+                },
+                {
+                  name: 'ecommerce.orders',
+                  type: 'topic',
+                  options: { durable: true },
+                },
+                {
+                  name: 'ecommerce.payments',
+                  type: 'direct',
+                  options: { durable: true },
+                },
+                {
+                  name: 'ecommerce.inventory',
+                  type: 'topic',
+                  options: { durable: true },
+                },
+                {
+                  name: 'ecommerce.deadletter',
+                  type: 'direct',
+                  options: { durable: true },
+                },
+                ...(options?.exchanges || []).map((exchange) => ({
+                  name: exchange.name,
+                  type: exchange.type,
+                  options: { durable: true },
+                })),
+              ],
+
+              enableControllerDiscovery: true,
+
+              connectionInitOptions: {
+                wait: true,
+                timeout: 30000,
+                reject: true,
               },
-              {
-                name: 'ecommerce.notifications',
-                type: 'direct',
-                options: { durable: true },
+
+              connectionManagerOptions: {
+                heartbeatIntervalInSeconds: 15,
+                reconnectTimeInSeconds: 30,
               },
-              {
-                name: 'ecommerce.orders',
-                type: 'topic',
-                options: { durable: true },
-              },
-              {
-                name: 'ecommerce.payments',
-                type: 'direct',
-                options: { durable: true },
-              },
-              {
-                name: 'ecommerce.inventory',
-                type: 'topic',
-                options: { durable: true },
-              },
-              {
-                name: 'ecommerce.deadletter',
-                type: 'direct',
-                options: { durable: true },
-              },
-              // Custom exchanges from options
-              ...(options?.exchanges || []).map((exchange) => ({
-                name: exchange.name,
-                type: exchange.type,
-                options: { durable: true },
-              })),
-            ],
-            uri: configService.get<string>(
-              'RABBIT_URL',
-              'amqp://localhost:5672',
-            ),
-            connectionInitOptions: {
-              wait: false,
-              timeout: 30000,
-              reject: true,
-            },
-            enableControllerDiscovery: true,
-            connectionManagerOptions: {
-              heartbeatIntervalInSeconds: 15,
-              reconnectTimeInSeconds: 30,
-            },
-            prefetchCount: configService.get<number>(
-              'RABBITMQ_PREFETCH_COUNT',
-              10,
-            ),
-            defaultRpcTimeout: configService.get<number>(
-              'RABBITMQ_RPC_TIMEOUT',
-              30000,
-            ),
-            defaultExchangeType: 'topic',
-          }),
+
+              prefetchCount: configService.get<number>(
+                'RABBITMQ_PREFETCH_COUNT',
+                10,
+              ),
+
+              defaultRpcTimeout: configService.get<number>(
+                'RABBITMQ_RPC_TIMEOUT',
+                30000,
+              ),
+
+              defaultExchangeType: 'topic',
+            };
+          },
         }),
       ],
       providers: [RabbitMQService],

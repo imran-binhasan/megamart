@@ -16,7 +16,7 @@ import { UploadService } from '../service/upload.service';
 import { JwtAuthGuard } from '../../auth/guard/jwt-auth-guard';
 import { CurrentUser } from '../../auth/decorator/current-user.decorator';
 import type { AuthenticatedUser } from '../../auth/interface/auth-user.interface';
-import { ImageCategory, UploaderType, UploadType } from '../enum/upload.enum';
+import { UploaderType } from '../enum/upload.enum';
 import {
   UploadResponseDto,
   DeleteResponseDto,
@@ -28,7 +28,7 @@ import { DeleteFileDto } from '../dto/delete-file.dto';
 /**
  * Controller for file upload operations
  */
-@Controller('upload')
+@Controller({path: 'upload', version: '1'})
 @UseGuards(JwtAuthGuard)
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}

@@ -2,31 +2,36 @@ import { registerAs } from '@nestjs/config';
 import * as Joi from 'joi';
 
 export const databaseValidationSchema = Joi.object({
-  JWT_REFRESH_SECRET: Joi.string().min(16).required(),
+
+  JWT_REFRESH_SECRET: Joi.string().min(32).required(),
 
   DB_TYPE: Joi.string().valid('mysql', 'postgres', 'mongodb').required(),
   DB_NAME: Joi.string().required(),
   DB_NAME_DEV: Joi.string().required(),
-  DB_HOST: Joi.string().hostname().required(),
+  DB_HOST: Joi.string().required(), // docker service name is valid
   DB_PORT: Joi.number().default(5432),
   DB_USER: Joi.string().required(),
   DB_PASSWORD: Joi.string().required(),
 
-  CLOUD_API_SECRET: Joi.string().required(),
-  CLOUD_API_KEY: Joi.string().required(),
-  CLOUD_NAME: Joi.string().required(),
+
+  REDIS_HOST: Joi.string().required(),
+  REDIS_PORT: Joi.number().default(6379),
+  REDIS_PASSWORD: Joi.string().allow('').optional(),
+
+
+  RABBITMQ_HOST: Joi.string().required(),
+  RABBITMQ_PORT: Joi.number().default(5672),
+  RABBITMQ_USER: Joi.string().required(),
+  RABBITMQ_PASSWORD: Joi.string().required(),
+
+
+  CLOUDINARY_API_KEY: Joi.string().allow('').optional(),
+  CLOUDINARY_API_SECRET: Joi.string().allow('').optional(),
+  CLOUDINARY_CLOUD_NAME: Joi.string().allow('').optional(),
 
   NODE_ENV: Joi.string()
     .valid('development', 'production')
     .default('development'),
-
-  REDIS_HOST: Joi.string().hostname().optional(),
-  REDIS_PORT: Joi.number().optional(),
-  REDIS_USERNAME: Joi.string().optional(),
-  REDIS_PASSWORD: Joi.string().optional(),
-  REDIS_TLS: Joi.boolean().truthy('true').falsy('false').default(false),
-
-  RABBIT_URL: Joi.string().uri().required(),
 });
 
 export default registerAs('database', () => {
@@ -45,6 +50,5 @@ export default registerAs('database', () => {
     logging: env !== 'production',
     autoLoadEntities: true,
     migrations: ['dist/core/database/migrations/*{.ts,.js}'],
-    ssl: process.env.DB_TYPE === 'postgres' ? { rejectUnauthorized: false } : false,
   };
 });

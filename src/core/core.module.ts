@@ -5,9 +5,6 @@ import { CacheModule } from './cache/module/cache.module';
 import { UploadModule } from './upload/module/upload.module';
 import { AuthModule } from './auth/module/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import databaseConfig, {
-  databaseValidationSchema,
-} from './database/database.config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DatabaseConfig } from './database/database.interface';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
@@ -15,6 +12,7 @@ import { HttpExceptionFilter } from 'src/shared/filter/http-exception.filter';
 import { ResponseInterceptor } from 'src/shared/interceptor/response.interceptor';
 import { JwtAuthGuard } from './auth/guard/jwt-auth-guard';
 import { User } from 'src/modules/personnel-management/user/entity/user.entity';
+import databaseConfig, { databaseValidationSchema } from './database/database.config';
 
 @Module({
   imports: [
@@ -38,8 +36,8 @@ import { User } from 'src/modules/personnel-management/user/entity/user.entity';
     RedisModule,
     CacheModule,
     RabbitMQModule.forRootAsync(),
-    UploadModule,
     AuthModule,
+    UploadModule,
   ],
   controllers: [],
   providers: [

@@ -37,7 +37,9 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
 
   async onModuleInit() {
     // Don't setup queues during initialization - they'll be created on-demand
-    this.logger.log('✅ RabbitMQ service initialized successfully (queues will be created on-demand)');
+    this.logger.log(
+      '✅ RabbitMQ service initialized successfully (queues will be created on-demand)',
+    );
   }
 
   // Optional: Setup queues manually when connection is ready
@@ -51,7 +53,9 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       await this.setupDefaultQueues();
       this.logger.log('✅ Successfully setup all RabbitMQ queues');
     } catch (error) {
-      this.logger.debug(`Queue setup failed (will be created on-demand): ${error.message}`);
+      this.logger.debug(
+        `Queue setup failed (will be created on-demand): ${error.message}`,
+      );
     }
   }
 
@@ -191,16 +195,14 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
           },
         });
 
-        await channel.bindQueue(
-          queue.name,
-          queue.exchange,
-          queue.routingKey,
-        );
+        await channel.bindQueue(queue.name, queue.exchange, queue.routingKey);
 
         this.logger.debug(`✅ Successfully setup queue: ${queue.name}`);
       } catch (error) {
         // Silently skip queue setup errors - queues will be created on-demand
-        this.logger.debug(`Queue ${queue.name} will be created on-demand: ${error.message}`);
+        this.logger.debug(
+          `Queue ${queue.name} will be created on-demand: ${error.message}`,
+        );
       }
     }
   }
@@ -226,7 +228,9 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
 
       // Ensure connection is available before publishing
       if (!this.isConnectionReady()) {
-        this.logger.warn('RabbitMQ connection not ready, skipping message publish');
+        this.logger.warn(
+          'RabbitMQ connection not ready, skipping message publish',
+        );
         return false;
       }
 
@@ -250,7 +254,10 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
 
   private isConnectionReady(): boolean {
     try {
-      return !!(this.amqpConnection.managedConnection && this.amqpConnection.managedChannel);
+      return !!(
+        this.amqpConnection.managedConnection &&
+        this.amqpConnection.managedChannel
+      );
     } catch {
       return false;
     }

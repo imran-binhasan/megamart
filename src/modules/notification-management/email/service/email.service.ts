@@ -11,7 +11,6 @@ import { EmailProvider } from '../provider/email.provider';
 import { SendEmailDto } from '../dto/send-email.dto';
 import { EmailQueryDto } from '../dto/query-email.dto';
 
-
 @Injectable()
 export class EmailService {
   private readonly logger = new Logger(EmailService.name);
@@ -69,7 +68,10 @@ export class EmailService {
 
       return await this.emailLogRepository.save(emailLog);
     } catch (error) {
-      this.logger.error(`Error in email service: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error in email service: ${error.message}`,
+        error.stack,
+      );
 
       // Create failed log entry if it doesn't exist
       const failedEmailLog = this.emailLogRepository.create({
@@ -96,7 +98,9 @@ export class EmailService {
         ...emailData,
         recipient,
       }).catch((error) => {
-        this.logger.error(`Failed to send email to ${recipient}: ${error.message}`);
+        this.logger.error(
+          `Failed to send email to ${recipient}: ${error.message}`,
+        );
       }),
     );
 
@@ -224,7 +228,9 @@ export class EmailService {
     const total = await this.emailLogRepository.count();
     const sent = await this.emailLogRepository.countBy({ status: 'sent' });
     const failed = await this.emailLogRepository.countBy({ status: 'failed' });
-    const pending = await this.emailLogRepository.countBy({ status: 'pending' });
+    const pending = await this.emailLogRepository.countBy({
+      status: 'pending',
+    });
 
     return {
       total,
@@ -265,11 +271,17 @@ export class EmailService {
   async findByRecipient(recipient: string, query: EmailQueryDto) {
     const queryBuilder = this.emailLogRepository
       .createQueryBuilder('email')
-      .where('email.recipient ILIKE :recipient', { recipient: `%${recipient}%` })
+      .where('email.recipient ILIKE :recipient', {
+        recipient: `%${recipient}%`,
+      })
       .andWhere('email.deletedAt IS NULL');
 
-    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } =
-      query;
+    const {
+      page = 1,
+      limit = 10,
+      sortBy = 'createdAt',
+      sortOrder = 'DESC',
+    } = query;
     const skip = (page - 1) * limit;
 
     const allowedSortFields = ['createdAt', 'updatedAt', 'status'];
@@ -310,7 +322,9 @@ export class EmailService {
     return this.sendEmail(resendDto);
   }
 
-  async validateEmail(email: string): Promise<{ valid: boolean; reason?: string }> {
+  async validateEmail(
+    email: string,
+  ): Promise<{ valid: boolean; reason?: string }> {
     if (!this.isValidEmail(email)) {
       return {
         valid: false,

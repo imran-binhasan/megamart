@@ -9,7 +9,7 @@ import {
 } from 'typeorm';
 import { User } from '../../user/entity/user.entity';
 import { VendorBankInfo } from './vendor-bank-info.entity';
-import { VendorAddress } from './vendor-address.entity';
+import { Address } from '../../address/entity/address.entity';
 import { VendorKYC } from './vendor-kyc.entity';
 import { Product } from 'src/modules/product-management/product/entity/product.entity';
 
@@ -166,9 +166,6 @@ export class Vendor extends BaseEntity {
 
   @OneToOne(() => VendorBankInfo, (bank) => bank.vendor)
   bankInfo?: VendorBankInfo;
-
-  @OneToMany(() => VendorAddress, (address) => address.vendor)
-  addresses: VendorAddress[];
 
   @OneToMany(() => Product, (product) => product.vendor)
   products: Product[];

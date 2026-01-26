@@ -3,7 +3,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { AuthController } from '../controller/auth.controller';
 import { TokenService } from '../service/token-service';
 import { PermissionCacheService } from '../service/permission-cache.service';
 import { JwtAuthGuard } from '../guard/jwt-auth-guard';
@@ -18,20 +17,24 @@ import { Customer } from 'src/modules/personnel-management/customer/entity/custo
 import { Vendor } from 'src/modules/personnel-management/vendor/entity/vendor.entity';
 import { VendorKYC } from 'src/modules/personnel-management/vendor/entity/vendor-kyc.entity';
 import { VendorBankInfo } from 'src/modules/personnel-management/vendor/entity/vendor-bank-info.entity';
-import { VendorAddress } from 'src/modules/personnel-management/vendor/entity/vendor-address.entity';
 import { Role } from 'src/modules/personnel-management/role/entity/role.entity';
 import { Permission } from 'src/modules/personnel-management/permission/entity/permission.entity';
-import { CustomerAuthService } from 'src/modules/personnel-management/customer/service/customer-auth.service';
-import { CustomerOAuthService } from 'src/modules/personnel-management/customer/service/customer-oauth.service';
-import { VendorAuthService } from 'src/modules/personnel-management/vendor/service/vendor-auth.service';
-import { AdminAuthService } from 'src/modules/personnel-management/admin/service/admin-auth.service';
 import { PermissionService } from 'src/modules/personnel-management/permission/service/permission.service';
 import { RoleService } from 'src/modules/personnel-management/role/service/role.service';
 
 @Module({
   imports: [
     ConfigModule,
-    TypeOrmModule.forFeature([User, Admin, Customer, Vendor, VendorKYC, VendorBankInfo, VendorAddress, Role, Permission]),
+    TypeOrmModule.forFeature([
+      User,
+      Admin,
+      Customer,
+      Vendor,
+      VendorKYC,
+      VendorBankInfo,
+      Role,
+      Permission,
+    ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -43,12 +46,8 @@ import { RoleService } from 'src/modules/personnel-management/role/service/role.
       }),
     }),
   ],
-  controllers: [AuthController],
+  controllers: [],
   providers: [
-    CustomerAuthService,
-    CustomerOAuthService,
-    VendorAuthService,
-    AdminAuthService,
     TokenService,
     PermissionCacheService,
     PermissionService,
@@ -61,9 +60,6 @@ import { RoleService } from 'src/modules/personnel-management/role/service/role.
     ScopePermissionGuard,
   ],
   exports: [
-    CustomerAuthService,
-    VendorAuthService,
-    AdminAuthService,
     TokenService,
     JwtAuthGuard,
     CustomerGuard,

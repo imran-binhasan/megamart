@@ -22,9 +22,6 @@ export class Permission extends BaseEntity {
   @Column({ name: 'display_name', type: 'varchar', length: 150 })
   displayName: string; // 'Create Product', 'Manage Orders', 'View Own Reports'
 
-  @Column({ name: 'description', type: 'text', nullable: true })
-  description?: string;
-
   @ManyToMany(() => Role, (role) => role.permissions)
   roles: Role[];
 }

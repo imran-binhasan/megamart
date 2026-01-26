@@ -9,7 +9,10 @@ import { Product } from '../../product/entity/product.entity';
 import { User } from 'src/modules/personnel-management/user/entity/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Cart, Customer, Product, User]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([Cart, Customer, Product, User]),
+    AuthModule,
+  ],
   controllers: [CartController],
   providers: [CartService],
   exports: [CartService],

@@ -12,6 +12,7 @@ import { UploadModule } from 'src/core/upload/module/upload.module';
 import { CustomerAuthController } from '../controller/customer-auth.controller';
 import { CustomerProfileController } from '../controller/customer-profile.controller';
 import { CustomerAuthService } from '../service/customer-auth.service';
+import { CustomerOAuthService } from '../service/customer-oauth.service';
 import { CustomerProfileService } from '../service/customer-profile.service';
 
 @Module({
@@ -28,10 +29,11 @@ import { CustomerProfileService } from '../service/customer-profile.service';
   ],
   providers: [
     CustomerAuthService,
+    CustomerOAuthService,
     CustomerProfileService,
     // CustomerAddressService,
     // CustomerOrderService,
   ],
-  exports: [CustomerAuthService, CustomerProfileService],
+  exports: [CustomerAuthService, CustomerOAuthService, CustomerProfileService],
 })
 export class CustomerModule {}

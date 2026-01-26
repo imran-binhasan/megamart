@@ -3,18 +3,35 @@ import {
   IsNotEmpty,
   IsOptional,
   IsEnum,
-  IsUUID,
+  IsNumber,
   IsBoolean,
 } from 'class-validator';
-import { AddressType } from '../entity/address.entity';
+import { AddressType, AddressOwnerType } from '../entity/address.entity';
 
 export class CreateAddressDto {
+  @IsNumber()
   @IsNotEmpty()
-  customerId: number;
+  userId: number;
+
+  @IsEnum(AddressOwnerType)
+  @IsNotEmpty()
+  ownerType: AddressOwnerType;
 
   @IsString()
   @IsNotEmpty()
-  street: string;
+  addressLine1: string;
+
+  @IsOptional()
+  @IsString()
+  addressLine2?: string;
+
+  @IsOptional()
+  @IsString()
+  fullName?: string;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -24,15 +41,20 @@ export class CreateAddressDto {
   @IsString()
   state?: string;
 
-  @IsOptional()
   @IsString()
-  postalCode?: string;
+  @IsNotEmpty()
+  postalCode: string;
+
+  @IsString()
+  @IsNotEmpty()
+  country: string;
 
   @IsOptional()
   @IsString()
-  addressLine?: string;
+  countryCode?: string;
 
   @IsEnum(AddressType)
+  @IsNotEmpty()
   type: AddressType;
 
   @IsOptional()

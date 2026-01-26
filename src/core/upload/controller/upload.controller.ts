@@ -28,7 +28,7 @@ import { DeleteFileDto } from '../dto/delete-file.dto';
 /**
  * Controller for file upload operations
  */
-@Controller({path: 'upload', version: '1'})
+@Controller({ path: 'upload', version: '1' })
 @UseGuards(JwtAuthGuard)
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}

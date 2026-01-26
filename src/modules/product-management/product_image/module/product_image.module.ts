@@ -8,7 +8,10 @@ import { Product } from '../../product/entity/product.entity';
 import { User } from 'src/modules/personnel-management/user/entity/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ProductImage, Product, User]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([ProductImage, Product, User]),
+    AuthModule,
+  ],
   controllers: [ProductImageController],
   providers: [ProductImageService],
   exports: [ProductImageService],

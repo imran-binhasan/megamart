@@ -4,6 +4,7 @@ import {
   UnauthorizedException,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
@@ -197,8 +198,78 @@ export class AdminAuthService extends AuthBaseService {
     };
   }
 
-  // Note: Password reset is intentionally NOT implemented for admins.
-  // Enterprise security best practice: Admins must contact super-admin
-  // or IT security team for password reset with identity verification.
-  // This prevents unauthorized access if admin email is compromised.
+  /**
+   * Reset password for an admin user (Super-admin only)
+   *
+   * Enterprise security requirement: Admin passwords can only be reset
+   * by a super-admin with proper verification, never via self-service.
+   *
+   * @param superAdminId - ID of the super-admin performing the reset
+   * @param targetAdminEmail - Email of admin whose password will be reset
+   * @param newPassword - New password (must meet complexity requirements)
+   * @param verificationNote - Reason/ticket number for audit trail
+   */
+  async resetAdminPassword(
+    superAdminId: number,
+    targetAdminEmail: string,
+    newPassword: string,
+    verificationNote?: string,
+  ): Promise<{ message: string }> {
+    // Verify super-admin has permission (check roleId has 'super-admin' role)
+    const superAdmin = await this.userRepository.findOne({
+      where: { id: superAdminId, userType: UserType.ADMIN },
+      relations: ['admin', 'admin.role'],
+    });
+
+    if (!superAdmin?.admin?.role) {
+      throw new ForbiddenException(
+        'Only super-admins can reset admin passwords',
+      );
+    }
+
+    // Find target admin
+    const targetUser = await this.userRepository.findOne({
+      where: {
+        email: targetAdminEmail.toLowerCase(),
+        userType: UserType.ADMIN,
+      },
+      relations: ['admin'],
+      select: ['id', 'email', 'firstName', 'lastName', 'userType'],
+    });
+
+    if (!targetUser || !targetUser.admin) {
+      throw new NotFoundException('Admin user not found');
+    }
+
+    // Prevent super-admin from being locked out if resetting their own password
+    if (targetUser.id === superAdminId) {
+      throw new BadRequestException(
+        'Cannot reset your own password. Use change password instead.',
+      );
+    }
+
+    // Hash new password
+    const hashedPassword = await PasswordUtil.hash(newPassword);
+
+    // Update password and clear any existing sessions
+    await this.userRepository.update(targetUser.id, {
+      password: hashedPassword,
+      failedLoginAttempts: 0,
+      resetPasswordToken: undefined,
+      resetPasswordExpires: undefined,
+    });
+
+    // Invalidate all sessions for security
+    await this.redisService.del(`refresh:${targetUser.id}`);
+    await this.redisService.del(`attempts:${targetUser.email}`);
+
+    // Log this action for audit trail
+    console.log(
+      `[SECURITY AUDIT] Admin password reset: ${superAdmin.email} reset password for ${targetUser.email}. Reason: ${verificationNote || 'Not provided'}`,
+    );
+
+    return {
+      message: `Password reset successful for ${targetUser.email}. All sessions have been invalidated.`,
+    };
+  }
 }

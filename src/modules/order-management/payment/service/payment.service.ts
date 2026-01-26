@@ -191,9 +191,8 @@ export class PaymentService {
       failureReason: reason,
     });
 
-    const savedRefund: Payment = await this.paymentRepository.save(
-      refundPayment,
-    );
+    const savedRefund: Payment =
+      await this.paymentRepository.save(refundPayment);
 
     // Emit refund created event
     this.eventService.emit('payment.refund.created', {

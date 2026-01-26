@@ -5,11 +5,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Address } from '../entity/address.entity';
+import { Address, AddressOwnerType } from '../entity/address.entity';
 import { UpdateAddressDto } from '../dto/update-address.dto';
 import { AddressQueryDto } from '../dto/query-address.dto';
 import { PaginatedServiceResponse } from 'src/shared/interface/api-response.interface';
 import { Customer } from '../../customer/entity/customer.entity';
+import { Vendor } from '../../vendor/entity/vendor.entity';
 import { CreateAddressDto } from '../dto/create-address.dto';
 
 @Injectable()
@@ -19,32 +20,54 @@ export class AddressService {
     private readonly addressRepository: Repository<Address>,
     @InjectRepository(Customer)
     private readonly customerRepository: Repository<Customer>,
+    @InjectRepository(Vendor)
+    private readonly vendorRepository: Repository<Vendor>,
   ) {}
 
   async create(createAddressDto: CreateAddressDto): Promise<Address> {
-    const { customerId, isDefault, ...addressData } = createAddressDto;
+    const { userId, ownerType, isDefault, ...restData } = createAddressDto;
 
-    // Check if customer exists
-    const customer = await this.customerRepository.findOne({
-      where: { id: customerId },
-    });
+    // Validate that userId is provided
+    if (!userId) {
+      throw new BadRequestException('userId must be provided');
+    }
 
-    if (!customer) {
-      throw new NotFoundException(`Customer with ID ${customerId} not found`);
+    // Validate that ownerType is provided
+    if (!ownerType) {
+      throw new BadRequestException('ownerType must be provided');
+    }
+
+    // Validate owner exists (customer or vendor)
+    if (ownerType === AddressOwnerType.CUSTOMER) {
+      const customer = await this.customerRepository.findOne({
+        where: { user: { id: userId } },
+      });
+      if (!customer) {
+        throw new NotFoundException(`Customer with userId ${userId} not found`);
+      }
+    } else if (ownerType === AddressOwnerType.VENDOR) {
+      const vendor = await this.vendorRepository.findOne({
+        where: { user: { id: userId } },
+      });
+      if (!vendor) {
+        throw new NotFoundException(`Vendor with userId ${userId} not found`);
+      }
     }
 
     // If this is going to be the default address, unset other defaults
     if (isDefault) {
-      await this.unsetDefaultAddresses(customerId);
+      await this.unsetDefaultAddresses(ownerType, userId);
     }
 
     // Create address
-    const address = this.addressRepository.create({
-      ...addressData,
+    const addressPayload: Partial<Address> = {
+      ...restData,
+      ownerType,
+      userId,
       isDefault: isDefault || false,
-      customer,
-    });
+    };
 
+    const address = this.addressRepository.create(addressPayload);
     const savedAddress = await this.addressRepository.save(address);
     return this.findOne(savedAddress.id);
   }
@@ -122,7 +145,7 @@ export class AddressService {
   async findOne(id: number): Promise<Address> {
     const address = await this.addressRepository.findOne({
       where: { id },
-      relations: ['customer'],
+      relations: ['user'],
     });
 
     if (!address) {
@@ -133,17 +156,82 @@ export class AddressService {
   }
 
   async findByCustomer(customerId: number): Promise<Address[]> {
+    const customer = await this.customerRepository.findOne({
+      where: { id: customerId },
+      relations: ['user'],
+    });
+
+    if (!customer) {
+      throw new NotFoundException(`Customer with ID ${customerId} not found`);
+    }
+
     return this.addressRepository.find({
-      where: { customer: { id: customerId } },
-      relations: ['customer'],
+      where: {
+        ownerType: AddressOwnerType.CUSTOMER,
+        userId: customer.userId,
+      },
+      relations: ['user'],
+      order: { isDefault: 'DESC', createdAt: 'DESC' },
+    });
+  }
+
+  async findByVendor(vendorId: number): Promise<Address[]> {
+    const vendor = await this.vendorRepository.findOne({
+      where: { id: vendorId },
+      relations: ['user'],
+    });
+
+    if (!vendor) {
+      throw new NotFoundException(`Vendor with ID ${vendorId} not found`);
+    }
+
+    return this.addressRepository.find({
+      where: {
+        ownerType: AddressOwnerType.VENDOR,
+        userId: vendor.userId,
+      },
+      relations: ['user'],
       order: { isDefault: 'DESC', createdAt: 'DESC' },
     });
   }
 
   async findDefaultAddress(customerId: number): Promise<Address | null> {
+    const customer = await this.customerRepository.findOne({
+      where: { id: customerId },
+      relations: ['user'],
+    });
+
+    if (!customer) {
+      throw new NotFoundException(`Customer with ID ${customerId} not found`);
+    }
+
     return this.addressRepository.findOne({
-      where: { customer: { id: customerId }, isDefault: true },
-      relations: ['customer'],
+      where: {
+        ownerType: AddressOwnerType.CUSTOMER,
+        userId: customer.userId,
+        isDefault: true,
+      },
+      relations: ['user'],
+    });
+  }
+
+  async findDefaultVendorAddress(vendorId: number): Promise<Address | null> {
+    const vendor = await this.vendorRepository.findOne({
+      where: { id: vendorId },
+      relations: ['user'],
+    });
+
+    if (!vendor) {
+      throw new NotFoundException(`Vendor with ID ${vendorId} not found`);
+    }
+
+    return this.addressRepository.findOne({
+      where: {
+        ownerType: AddressOwnerType.VENDOR,
+        userId: vendor.userId,
+        isDefault: true,
+      },
+      relations: ['user'],
     });
   }
 
@@ -153,16 +241,19 @@ export class AddressService {
   ): Promise<Address> {
     const existingAddress = await this.addressRepository.findOne({
       where: { id },
-      relations: ['customer'],
+      relations: ['user'],
     });
 
     if (!existingAddress) {
       throw new NotFoundException(`Address with ID ${id} not found`);
     }
 
-    // If setting as default, unset other defaults for the same customer
+    // If setting as default, unset other defaults for the same owner
     if (updateAddressDto.isDefault) {
-      await this.unsetDefaultAddresses(existingAddress.customer.id);
+      await this.unsetDefaultAddresses(
+        existingAddress.ownerType,
+        existingAddress.userId,
+      );
     }
 
     // Update address
@@ -185,15 +276,15 @@ export class AddressService {
   async setAsDefault(id: number): Promise<Address> {
     const address = await this.addressRepository.findOne({
       where: { id },
-      relations: ['customer'],
+      relations: ['user'],
     });
 
     if (!address) {
       throw new NotFoundException(`Address with ID ${id} not found`);
     }
 
-    // Unset other defaults for the same customer
-    await this.unsetDefaultAddresses(address.customer.id);
+    // Unset other defaults for the same owner
+    await this.unsetDefaultAddresses(address.ownerType, address.userId);
 
     // Set this address as default
     await this.addressRepository.update(id, { isDefault: true });
@@ -219,15 +310,48 @@ export class AddressService {
   }
 
   async getAddressesCount(customerId: number): Promise<number> {
+    const customer = await this.customerRepository.findOne({
+      where: { id: customerId },
+      relations: ['user'],
+    });
+
+    if (!customer) {
+      throw new NotFoundException(`Customer with ID ${customerId} not found`);
+    }
+
     return this.addressRepository.count({
-      where: { customer: { id: customerId } },
+      where: {
+        ownerType: AddressOwnerType.CUSTOMER,
+        userId: customer.userId,
+      },
+    });
+  }
+
+  async getVendorAddressesCount(vendorId: number): Promise<number> {
+    const vendor = await this.vendorRepository.findOne({
+      where: { id: vendorId },
+      relations: ['user'],
+    });
+
+    if (!vendor) {
+      throw new NotFoundException(`Vendor with ID ${vendorId} not found`);
+    }
+
+    return this.addressRepository.count({
+      where: {
+        ownerType: AddressOwnerType.VENDOR,
+        userId: vendor.userId,
+      },
     });
   }
 
   // Private helper methods
-  private async unsetDefaultAddresses(customerId: number): Promise<void> {
+  private async unsetDefaultAddresses(
+    ownerType: AddressOwnerType,
+    userId: number,
+  ): Promise<void> {
     await this.addressRepository.update(
-      { customer: { id: customerId } },
+      { ownerType, userId },
       { isDefault: false },
     );
   }

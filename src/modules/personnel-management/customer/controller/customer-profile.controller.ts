@@ -6,15 +6,20 @@ import {
   Put,
   UploadedFile,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
-import { ApiConsumes, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiConsumes, ApiOperation, ApiResponse, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { CustomerProfileService } from '../service/customer-profile.service';
 import { CurrentUser } from 'src/core/auth/decorator/current-user.decorator';
+import { CustomerGuard } from 'src/core/auth/guard/customer.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CustomerProfileDto } from '../dto/customer-profile.dto';
 import type { AuthenticatedUser } from 'src/core/auth/interface/auth-user.interface';
 
+@ApiTags('Customer - Profile')
 @Controller({ path: 'customer/profile', version: '1' })
+@UseGuards(CustomerGuard)
+@ApiBearerAuth()
 export class CustomerProfileController {
   constructor(private profileService: CustomerProfileService) {}
 

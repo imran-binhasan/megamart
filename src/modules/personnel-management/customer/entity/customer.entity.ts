@@ -24,11 +24,6 @@ export class Customer extends BaseEntity {
   @Column({ name: 'verified_at', type: 'timestamptz', nullable: true })
   verifiedAt?: Date;
 
-  @OneToMany(() => Address, (address) => address.customer, {
-    cascade: true,
-  })
-  addresses: Address[];
-
   @Column({
     name: 'tier',
     type: 'enum',

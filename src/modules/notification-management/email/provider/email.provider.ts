@@ -175,10 +175,7 @@ export class EmailProvider {
     });
   }
 
-  private renderTemplate(
-    template: string,
-    data: Record<string, any>,
-  ): string {
+  private renderTemplate(template: string, data: Record<string, any>): string {
     let rendered = template;
 
     for (const [key, value] of Object.entries(data)) {

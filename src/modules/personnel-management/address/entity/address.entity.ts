@@ -1,20 +1,49 @@
 import { BaseEntity } from 'src/shared/entity/base.entity';
-import { Column, DeleteDateColumn, Entity, ManyToOne, Index } from 'typeorm';
+import { Column, DeleteDateColumn, Entity, ManyToOne, Index, JoinColumn } from 'typeorm';
 import { Customer } from '../../customer/entity/customer.entity';
+import { Vendor } from '../../vendor/entity/vendor.entity';
+import { User } from '../../user/entity/user.entity';
+
+export enum AddressOwnerType {
+  CUSTOMER = 'customer',
+  VENDOR = 'vendor',
+}
 
 export enum AddressType {
+  // Customer address types
   SHIPPING = 'shipping',
   BILLING = 'billing',
   BOTH = 'both',
+  // Vendor address types
+  BUSINESS = 'business',
+  WAREHOUSE = 'warehouse',
+  PICKUP = 'pickup',
+  REGISTERED = 'registered',
 }
 
 @Entity('address')
+@Index(['ownerType', 'userId'])
+@Index(['ownerType', 'type'])
 export class Address extends BaseEntity {
-  @Column({ name: 'full_name', type: 'varchar', length: 200 })
-  fullName: string;
+  // Polymorphic field
+  @Column({
+    name: 'owner_type',
+    type: 'enum',
+    enum: AddressOwnerType,
+  })
+  ownerType: AddressOwnerType;
 
-  @Column({ name: 'phone', type: 'varchar', length: 20 })
-  phone: string;
+  // User reference (both customer and vendor have userId)
+  @Column({ name: 'user_id', type: 'int' })
+  @Index()
+  userId: number;
+
+  // Address fields
+  @Column({ name: 'full_name', type: 'varchar', length: 200, nullable: true })
+  fullName?: string;
+
+  @Column({ name: 'phone', type: 'varchar', length: 20, nullable: true })
+  phone?: string;
 
   @Column({ name: 'address_line_1', type: 'varchar', length: 255 })
   addressLine1: string;
@@ -37,24 +66,23 @@ export class Address extends BaseEntity {
   postalCode: string;
 
   @Column({ name: 'country', type: 'varchar', length: 100 })
-  country: string; // Free text for multi-country support
+  country: string;
 
   @Column({ name: 'country_code', type: 'varchar', length: 3, nullable: true })
-  countryCode?: string; // ISO 3166-1 alpha-2 (e.g., 'BD', 'US', 'DE')
+  countryCode?: string;
 
   @Column({
     name: 'type',
     type: 'enum',
     enum: AddressType,
-    default: AddressType.SHIPPING,
   })
   type: AddressType;
 
   @Column({ name: 'is_default', type: 'boolean', default: false })
   isDefault: boolean;
 
-  @ManyToOne(() => Customer, (customer) => customer.addresses, {
-    onDelete: 'CASCADE',
-  })
-  customer: Customer;
+  // Relations (for eager loading when needed)
+  @ManyToOne(() => User, { nullable: false, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 }

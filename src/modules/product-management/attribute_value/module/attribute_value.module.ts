@@ -9,7 +9,10 @@ import { AuthModule } from 'src/core/auth/module/auth.module';
 import { User } from 'src/modules/personnel-management/user/entity/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AttributeValue, Attribute, User]), AuthModule],
+  imports: [
+    TypeOrmModule.forFeature([AttributeValue, Attribute, User]),
+    AuthModule,
+  ],
   controllers: [AttributeValueController],
   providers: [AttributeValueService],
   exports: [AttributeValueService],

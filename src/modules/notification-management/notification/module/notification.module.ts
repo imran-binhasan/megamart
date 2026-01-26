@@ -10,7 +10,12 @@ import { User } from 'src/modules/personnel-management/user/entity/user.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Notification, CustomerNotification, Customer, User]),
+    TypeOrmModule.forFeature([
+      Notification,
+      CustomerNotification,
+      Customer,
+      User,
+    ]),
     AuthModule,
   ],
   controllers: [NotificationController],

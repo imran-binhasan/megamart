@@ -12,7 +12,9 @@ import { HttpExceptionFilter } from 'src/shared/filter/http-exception.filter';
 import { ResponseInterceptor } from 'src/shared/interceptor/response.interceptor';
 import { JwtAuthGuard } from './auth/guard/jwt-auth-guard';
 import { User } from 'src/modules/personnel-management/user/entity/user.entity';
-import databaseConfig, { databaseValidationSchema } from './database/database.config';
+import databaseConfig, {
+  databaseValidationSchema,
+} from './database/database.config';
 
 @Module({
   imports: [

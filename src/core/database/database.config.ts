@@ -2,7 +2,6 @@ import { registerAs } from '@nestjs/config';
 import * as Joi from 'joi';
 
 export const databaseValidationSchema = Joi.object({
-
   JWT_REFRESH_SECRET: Joi.string().min(32).required(),
 
   DB_TYPE: Joi.string().valid('mysql', 'postgres', 'mongodb').required(),
@@ -13,17 +12,14 @@ export const databaseValidationSchema = Joi.object({
   DB_USER: Joi.string().required(),
   DB_PASSWORD: Joi.string().required(),
 
-
   REDIS_HOST: Joi.string().required(),
   REDIS_PORT: Joi.number().default(6379),
   REDIS_PASSWORD: Joi.string().allow('').optional(),
-
 
   RABBITMQ_HOST: Joi.string().required(),
   RABBITMQ_PORT: Joi.number().default(5672),
   RABBITMQ_USER: Joi.string().required(),
   RABBITMQ_PASSWORD: Joi.string().required(),
-
 
   CLOUDINARY_API_KEY: Joi.string().allow('').optional(),
   CLOUDINARY_API_SECRET: Joi.string().allow('').optional(),

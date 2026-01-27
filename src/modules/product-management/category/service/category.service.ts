@@ -62,7 +62,7 @@ export class CategoryService {
 
   async findAll(
     query: CategoryQueryDto,
-  ): Promise<PaginatedServiceResponse<Category>> {
+  ): Promise<any> {
     const {
       page = 1,
       limit = 10,
@@ -70,11 +70,37 @@ export class CategoryService {
       parentId,
       rootOnly,
       includeChildren,
+      tree = false,
+      includeProducts = false,
+      includeDeleted = false,
     } = query;
 
     // Validate pagination parameters
     if (page < 1 || limit < 1 || limit > 100) {
       throw new BadRequestException('Invalid pagination parameters');
+    }
+
+    // If tree view is requested, return tree structure (no pagination)
+    if (tree) {
+      return this.getCategoryTree(search, rootOnly, includeProducts);
+    }
+
+    // If rootOnly is requested with no pagination parameters, return all root categories
+    if (rootOnly && page === 1 && limit === 10) {
+      const categories = await this.getRootCategories(
+        search,
+        includeChildren,
+        includeProducts,
+      );
+      return {
+        items: categories,
+        pagination: {
+          page: 1,
+          limit: categories.length,
+          total: categories.length,
+          totalPages: 1,
+        },
+      };
     }
 
     const queryBuilder = this.categoryRepository
@@ -86,16 +112,25 @@ export class CategoryService {
       queryBuilder.leftJoinAndSelect('category.children', 'children');
     }
 
+    // Include products if requested
+    if (includeProducts) {
+      queryBuilder.leftJoinAndSelect('category.products', 'products');
+    }
+
+    // Include deleted if requested
+    if (includeDeleted) {
+      queryBuilder.withDeleted();
+    }
+
     // Apply filters
     if (rootOnly) {
       queryBuilder.where('category.parent IS NULL');
     } else if (parentId) {
-      queryBuilder.where('category.parent.id = :parentId', { parentId });
+      queryBuilder.where('category.parentId = :parentId', { parentId });
     }
 
     // Apply search filter
     if (search?.trim()) {
-      const searchCondition = rootOnly || parentId ? 'AND' : 'WHERE';
       queryBuilder.andWhere('category.name ILIKE :search', {
         search: `%${search.trim()}%`,
       });
@@ -106,6 +141,7 @@ export class CategoryService {
       .skip((page - 1) * limit)
       .take(limit)
       .orderBy('category.createdAt', 'DESC')
+      .addOrderBy('category.name', 'ASC')
       .getManyAndCount();
 
     return {
@@ -255,68 +291,74 @@ export class CategoryService {
     return this.findOne(id);
   }
 
-  // Utility methods
-  async getRootCategories(): Promise<Category[]> {
-    return this.categoryRepository.find({
-      where: { parent: IsNull() },
-      relations: ['children'],
-      order: { name: 'ASC' },
-    });
-  }
+  // Utility methods for query support
+  
+  /**
+   * Get root categories with optional filtering
+   * Supports search, includeChildren, and includeProducts
+   */
+  private async getRootCategories(
+    search?: string,
+    includeChildren?: boolean,
+    includeProducts?: boolean,
+  ): Promise<Category[]> {
+    const queryBuilder = this.categoryRepository
+      .createQueryBuilder('category')
+      .where('category.parentId IS NULL');
 
-  async getCategoryTree(): Promise<Category[]> {
-    return this.categoryRepository.find({
-      where: { parent: IsNull() },
-      relations: ['children', 'children.children'],
-      order: {
-        name: 'ASC',
-        children: { name: 'ASC' },
-      },
-    });
-  }
-
-  async getChildCategories(parentId: number): Promise<Category[]> {
-    const parent = await this.categoryRepository.findOne({
-      where: { id: parentId },
-    });
-
-    if (!parent) {
-      throw new NotFoundException(
-        `Parent category with ID ${parentId} not found`,
-      );
+    if (includeChildren) {
+      queryBuilder.leftJoinAndSelect('category.children', 'children');
     }
 
-    return this.categoryRepository.find({
-      where: { parent: { id: parentId } },
-      relations: ['parent'],
-      order: { name: 'ASC' },
-    });
-  }
-
-  async getCategoriesCount(): Promise<number> {
-    return this.categoryRepository.count();
-  }
-
-  async findAllWithoutPagination(): Promise<Category[]> {
-    return this.categoryRepository.find({
-      relations: ['parent'],
-      order: { name: 'ASC' },
-    });
-  }
-
-  async findWithProducts(id: number): Promise<Category> {
-    const category = await this.categoryRepository.findOne({
-      where: { id },
-      relations: ['parent', 'children', 'products'],
-    });
-
-    if (!category) {
-      throw new NotFoundException(`Category with ID ${id} not found`);
+    if (includeProducts) {
+      queryBuilder.leftJoinAndSelect('category.products', 'products');
     }
 
-    return category;
+    if (search?.trim()) {
+      queryBuilder.andWhere('category.name ILIKE :search', {
+        search: `%${search.trim()}%`,
+      });
+    }
+
+    return queryBuilder.orderBy('category.name', 'ASC').getMany();
   }
 
+  /**
+   * Get category tree (hierarchical structure)
+   * Supports search and filtering
+   */
+  private async getCategoryTree(
+    search?: string,
+    rootOnly?: boolean,
+    includeProducts?: boolean,
+  ): Promise<Category[]> {
+    const queryBuilder = this.categoryRepository
+      .createQueryBuilder('category')
+      .leftJoinAndSelect('category.children', 'children')
+      .leftJoinAndSelect('children.children', 'grandchildren');
+
+    if (includeProducts) {
+      queryBuilder.leftJoinAndSelect('category.products', 'products');
+    }
+
+    if (rootOnly) {
+      queryBuilder.where('category.parentId IS NULL');
+    } else {
+      queryBuilder.where('category.parentId IS NULL');
+    }
+
+    if (search?.trim()) {
+      queryBuilder.andWhere('category.name ILIKE :search', {
+        search: `%${search.trim()}%`,
+      });
+    }
+
+    return queryBuilder.orderBy('category.name', 'ASC').getMany();
+  }
+
+  /**
+   * Check circular dependency when updating parent
+   */
   private async checkCircularDependency(
     categoryId: number,
     parentId: number,
